@@ -1,0 +1,1 @@
+CREATE TABLE covid_data ( report_date DATE NOT NULL, country_region VARCHAR(255) NOT NULL, total_confirmed BIGINT, total_deaths BIGINT, total_recovered DOUBLE PRECISION, total_active BIGINT, PRIMARY KEY (report_date, country_region) )
