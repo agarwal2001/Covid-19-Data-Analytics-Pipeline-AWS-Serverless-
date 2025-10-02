@@ -4,4 +4,8 @@
 
  # Project Overview
  This project demonstrates an end-to-end data engineering pipeline to ingest, process, and analyze COVID-19 data using AWS services. 
+
+  # Key AWS Services:
+
+      1.AWS S3:
  
