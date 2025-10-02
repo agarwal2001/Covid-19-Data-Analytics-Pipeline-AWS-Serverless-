@@ -3,18 +3,36 @@
  ETL), and Amazon Redshift Serverless.
 
  # Project Overview
- This project demonstrates an end-to-end data engineering pipeline to ingest, process, and analyze COVID-19 data using AWS services. 
+ Raw CSVs are processed and loaded into Redshift, where aggregated queries can be run for insights like worldwide confirmed cases. 
 
   # Key AWS Services:
-   1.AWS S3-Storage for raw and processed data.
+   1.AWS S3:
+   * Created S3 buckets for raw and curated datasets.
+   * Upload daily COVID CSV files into raw/.
+   * Curated output written to s3://your-datalake-curated/covid/summary/.
 
-   2.AWS Glue crawler:AWS Glue Crawler scans raw data in S3 and creates/updates schema in the Glue Data Catalog.
 
-   3.AWS Glue job:AWS Glue Jobs clean and transform the data:
-   - Handle missing values
-   - Standardize dates and country codes
-   - Partition and store data in Parquet format
+   2.AWS Glue crawler:
+   * Glue Crawler reads raw CSV files and infers schema.
+   * Output catalog table: raw_covid_daily_reports.
 
-   4.AWS Redshift:The Glue job uploads the processed data into a Redshift table for deriving meaningful business insights.
+
+   3.AWS Glue job:AWS Glue Jobs clean and transform the data
+   * Apply Mapping: normalize column names and types.
+   * ResolveChoice: ensure numeric types.
+   * Clean & Transform:
+   * Parse Last Update → report_date
+   * Standardize country and province names
+   * Compute active_cases = confirmed - deaths - recovered
+   * Filter invalid rows.
+   * Aggregate by report_date & country_region.
+
+
+   5.AWS Redshift:
+   * Glue ETL reads Parquet from curated S3.
+   * Applied Mapping to match Redshift schema.
+   * Loaded data using JDBC connection (redshiftconnection4).
+   * Data is efficiently loaded into Redshift with distribution and sort keys optimized for country and report date
+
      
  
