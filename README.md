@@ -17,7 +17,7 @@
    * Output catalog table: raw_covid_daily_reports.
 
 
-   3.AWS Glue job:AWS Glue Jobs clean and transform the data
+   3.AWS Glue job: Glue Jobs clean and transform the data
    * Apply Mapping: normalize column names and types.
    * ResolveChoice: ensure numeric types.
    * Clean & Transform:
