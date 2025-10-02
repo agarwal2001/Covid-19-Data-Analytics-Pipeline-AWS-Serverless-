@@ -11,9 +11,9 @@
    2.AWS Glue crawler:AWS Glue Crawler scans raw data in S3 and creates/updates schema in the Glue Data Catalog.
 
    3.AWS Glue job:AWS Glue Jobs clean and transform the data:
-         - Handle missing values
-         - Standardize dates and country codes
-         - Partition and store data in Parquet format
+   - Handle missing values
+   - Standardize dates and country codes
+   - Partition and store data in Parquet format
 
    4.AWS Redshift:The Glue job uploads the processed data into a Redshift table for deriving meaningful business insights.
      
