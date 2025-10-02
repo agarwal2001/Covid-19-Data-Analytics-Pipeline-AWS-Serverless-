@@ -1,0 +1,78 @@
+# Clean & Transform
+# -------------------------
+logger.info('Performing COVID transformations')
+
+df = df.withColumn(
+    "report_date",
+    F.to_date(F.to_timestamp(F.col("new_last_update"), "M/d/yy H:mm"))
+)
+
+# Standardize text fields
+df = (
+    df
+    .withColumn("country_region", F.upper(F.trim(F.col("new_country_region"))))
+    .withColumn("province_state", F.trim(F.col("new_province_state")))
+)
+
+# Coalesce numeric columns to 0 for safe arithmetic
+c_confirmed = F.coalesce(F.col("new_confirmed").cast("long"), F.lit(0))
+c_deaths    = F.coalesce(F.col("new_deaths").cast("long"), F.lit(0))
+c_recovered = F.coalesce(F.col("new_recovered").cast("long"), F.lit(0))
+
+# Compute active cases
+df = df.withColumn("active_cases", (c_confirmed - c_deaths - c_recovered).cast("long"))
+
+# Select curated columns
+df_curated = df.select(
+    "report_date",
+    "country_region",
+    "province_state",
+    c_confirmed.alias("confirmed_cases"),
+    c_deaths.alias("deaths"),
+    c_recovered.alias("recovered"),
+    "active_cases"
+)
+
+# Filter required rows
+df_curated = df_curated.filter(
+    (F.col("report_date").isNotNull()) & (F.col("country_region").isNotNull())
+)
+
+logger.info('Sample curated records:')
+df_curated.show(20, truncate=False)
+
+# -------------------------
+# SQL aggregation example
+# -------------------------
+logger.info('Create temp view and run SQL aggregation')
+df_curated.createOrReplaceTempView("covid_view")
+
+# Example: aggregate by report_date & country
+agg_sql = """
+SELECT
+  report_date,
+  country_region,
+  SUM(confirmed_cases) AS total_confirmed,
+  SUM(deaths)          AS total_deaths,
+  SUM(recovered)       AS total_recovered,
+  SUM(active_cases)    AS total_active
+FROM covid_view
+GROUP BY report_date, country_region
+ORDER BY report_date, country_region
+"""
+product_sql_df = spark.sql(agg_sql)
+
+logger.info('Aggregated result (top 20):')
+
+product_sql_df.show(20, truncate=False)
+logger.info(f"Row count in product_sql_df: {product_sql_df.count()}")
+
+product_sql_df.printSchema()
+
+# -------------------------
+# Spark DF -> DynamicFrame
+# -------------------------
+logger.info('Convert aggregated Spark DF to DynamicFrame')
+dynamic_frame = DynamicFrame.fromDF(product_sql_df, glueContext, "dynamic_frame")
+
+# -------------------------
